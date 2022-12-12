@@ -1,0 +1,98 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.google.protobuf' version '0.8.18'
+    id 'io.spring.dependency-management' version '1.0.1.RELEASE'
+    //id 'idea'
+}
+
+group 'edu.ut.debs2022'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url "https://maven-central.storage-download.googleapis.com/maven2/" }
+}
+
+application {
+    mainClass.set("edu.ut.debs2022.Main")
+}
+
+protobuf {
+    
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.17.3"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.42.1'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+        proto {
+            srcDirs 'src/main/proto'
+        }
+    }
+}
+
+jar {
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+
+    manifest {
+        attributes "Main-Class": "edu.ut.debs22.Main"
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+tasks.processResources {
+    duplicatesStrategy = 'include'
+}
+
+apply plugin: 'java'
+
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.apache.logging.log4j:log4j-bom:2.17.2'
+    }
+}
+
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+    implementation group: 'com.sun.xml.messaging.saaj', name: 'saaj-impl', version: '1.3'
+    implementation group: 'javax.xml.ws', name: 'jaxws-api', version: '2.3.1'
+    implementation group: 'com.esotericsoftware', name: 'kryo', version: '4.0.0'
+    implementation group: 'javax.jws', name: 'javax.jws-api', version: '1.1'
+    implementation 'org.apache.logging.log4j:log4j-api'
+    implementation 'org.apache.logging.log4j:log4j-core'
+    implementation group: 'com.sun.xml.ws', name: 'jaxws-rt', version: '2.1.3'
+    implementation 'io.grpc:grpc-netty-shaded:1.45.0'
+    implementation 'io.grpc:grpc-protobuf:1.45.0'
+    implementation 'io.grpc:grpc-stub:1.45.0'
+
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // grpc needs that, necessary for Java 9+
+}
+
+test {
+    useJUnitPlatform()
+}
